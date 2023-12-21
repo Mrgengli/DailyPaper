@@ -1,5 +1,7 @@
 import arxiv
 from typing import List, Optional
+import requests
+import time 
 
 class ArXiv:
     def __init__(
@@ -7,18 +9,18 @@ class ArXiv:
         query: str,
         filter_keys: str,
         max_results: int,
-        id_list: Optional[List],
+        # id_list: Optional[List],
     ):
         self.query = query
         self.max_results = max_results
-        self.id_list = id_list
+        # self.id_list = id_list
         self.filter_keys = filter_keys
 
     def get_search(self):
         search = arxiv.Search(
             query=self.query,
             max_results=self.max_results,
-            id_list=self.id_list,
+            # id_list=self.id_list,
             sort_by=arxiv.SortCriterion.SubmittedDate,
             sort_order=arxiv.SortOrder.Descending
         )
@@ -41,6 +43,7 @@ class ArXiv:
     def show_info(self, search):
         for idx, result in enumerate(search.results()):
             print(idx, result.title, result.updated, result.pdf_url)
+            self.download_pdf(result)
     
     def info_2_dict(self):
         results = list()
@@ -59,14 +62,25 @@ class ArXiv:
             results.append(result)
         return results
 
-    def download_pdf(self):
-        pass
+    def download_pdf(self, result): 
+        t1 = time.time()
+        response = requests.get(result.pdf_url)
+        if response.status_code == 200:
+            filename = f"{result.title.replace(' ', '_')}.pdf"
+            with open(filename, "wb") as file:
+                file.write(response.content)
+            print(f"PDF 下载成功: {filename}")
+        else:
+            print("PDF 下载失败")
+        t2 = time.time()
+        t = t2 - t1
+        print(f"下载时间: {t}s")
 
 if __name__ == '__main__':
     myarxiv = ArXiv(
-        query = "chatgpt",
-        filter_keys="chatgpt",
-        max_results=10,
+        query = "Uranium",
+        filter_keys="Uranium",
+        max_results=100,
     )
     myarxiv.get_search()
-    myarxiv.show_info()
+    # myarxiv.show_info()
